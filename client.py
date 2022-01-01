@@ -3,7 +3,7 @@ from game import Client
 
 def main():
     """
-    This script will launch the guest of the game. 
+    This script will launch the guest of the game.
     Must be executed after the server is up (server.py).
     """
     client = Client()

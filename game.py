@@ -157,7 +157,7 @@ class Client:
 
     def start_playing(self) -> bool:
         # if the player == -x, is the first one playing
-        first = pickle.loads(self.serv.recv(1024)) == "-x" 
+        first = pickle.loads(self.serv.recv(1024)) == "-x"
 
         if first:
             print("You play first as 'X'")
@@ -340,8 +340,3 @@ class Server:
     def close(self) -> None:
         _ = input(f"\nThank you for playing!\nPress enter to quit...\n")
         self.client_socket.close()
-
-
-if __name__ == "__main__":
-    t = Connect4("X")
-    t.display()
