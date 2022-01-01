@@ -1,16 +1,24 @@
 from game import Server
+import random
 
 
 def main():
     """
-    This script will launch the host of the game, who will play first turn
-    as "X" and must be executed before the client.py script.
+    This script will launch the host of the game.
+    Must be executed before the client.py script.
     """
     server = Server()
 
     while True:  # main loop
-        server.player.display_info()
-        server.player.display()
+
+        first = random.random() < 0.5
+        server.start_playing(first=first)
+
+        if first:
+            server.player.display_info()
+            server.player.display()
+        else:
+            server.await_move()
 
         while True:  # game loop
             move = int(input(f"Enter next move: "))

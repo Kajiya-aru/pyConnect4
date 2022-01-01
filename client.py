@@ -3,13 +3,18 @@ from game import Client
 
 def main():
     """
-    This script will launch the guest of the game, who will play second turn
-    as "O" and must be executed afetr the server is activated (server.py).
+    This script will launch the guest of the game. 
+    Must be executed after the server is up (server.py).
     """
     client = Client()
 
     while True:  # main loop
-        client.await_move()
+
+        if client.start_playing():
+            client.player.display_info()
+            client.player.display()
+        else:
+            client.await_move()
 
         while True:  # game loop
             move = int(input(f"Enter next move: "))

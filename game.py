@@ -136,7 +136,7 @@ class Connect4:
         """
         Header for the turns where the player moves.
         """
-        print(f"\nYou Play!\nCurrent turn: {self.turn}\n")
+        print(f"\nYour turn!\nCurrent turn: {self.turn}\n")
 
     def restart(self) -> None:
         """
@@ -150,14 +150,26 @@ class Client:
     def __init__(self, host_ip: str = "") -> None:
         HOST_IP = host_ip if host_ip else socket.gethostbyname(socket.gethostname())
         PORT = 12783
-
         self.serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serv.connect((HOST_IP, PORT))
-
         self.STATUS = "-p"
-
-        self.player = Connect4("O")
         print(f"\nConnected to {self.serv.getsockname()}!")
+
+    def start_playing(self) -> bool:
+        # if the player == -x, is the first one playing
+        first = pickle.loads(self.serv.recv(1024)) == "-x" 
+
+        if first:
+            print("You play first as 'X'")
+            self.player = Connect4("X")
+            self.__self = "-x"
+            self.__opp = "-o"
+        else:
+            print("You play second as 'O'")
+            self.player = Connect4("O")
+            self.__self = "-o"
+            self.__opp = "-x"
+        return first
 
     def send_move(self, move: int) -> None:
         self.player.make_move(move)
@@ -176,13 +188,13 @@ class Client:
         self.player.display_info()
         self.player.display()
 
-        if self.STATUS in ("-x", "-d"):
+        if self.STATUS in (self.__opp, "-d"):
             return False
         return True
 
     def continue_game(self) -> bool:
         if self.player.check_win():
-            self.STATUS = "-o"
+            self.STATUS = self.__self
             self.serv.send(pickle.dumps(self.STATUS))
             return False
 
@@ -195,11 +207,11 @@ class Client:
         return True
 
     def game_over(self) -> bool:
-        if self.STATUS == "-o":
+        if self.STATUS == self.__self:
             print(f"Congrats, you won in {self.player.turn - 1} turns!")
         elif self.STATUS == "-d":
             print("It's a draw!")
-        elif self.STATUS == "-x":
+        elif self.STATUS == self.__opp:
             print("Sorry, the opponent won.")
         else:
             print("The opponent disconnected, you win.")
@@ -223,7 +235,7 @@ class Client:
         if client_response == "N":
             return False
 
-        self.player.restart()
+        self.player = None
         return True
 
     def close(self) -> None:
@@ -246,6 +258,20 @@ class Server:
         self.client_socket, client_address = self.serv.accept()
         print(f"\nConnected to {client_address}!")
 
+    def start_playing(self, first: bool) -> None:
+        if first:
+            print("You play first as 'X'")
+            self.player = Connect4("X")
+            self.__self = "-x"
+            self.__opp = "-o"
+        else:
+            print("You play second as 'O'")
+            self.player = Connect4("O")
+            self.__self = "-o"
+            self.__opp = "-x"
+
+        self.client_socket.send(pickle.dumps(self.__opp))
+
     def send_move(self, move: int) -> None:
         self.player.make_move(move)
         os.system("cls")
@@ -264,13 +290,13 @@ class Server:
         self.player.display_info()
         self.player.display()
 
-        if self.STATUS in ("-o", "-d"):
+        if self.STATUS in (self.__opp, "-d"):
             return False
         return True
 
     def continue_game(self) -> bool:
         if self.player.check_win():
-            self.STATUS = "-x"
+            self.STATUS = self.__self
             self.client_socket.send(pickle.dumps(self.STATUS))
             return False
 
@@ -283,11 +309,11 @@ class Server:
         return True
 
     def game_over(self) -> bool:
-        if self.STATUS == "-x":
+        if self.STATUS == self.__self:
             print(f"Congrats, you won in {self.player.turn - 1} turns!")
         elif self.STATUS == "-d":
             print("It's a draw!")
-        elif self.STATUS == "-o":
+        elif self.STATUS == self.__opp:
             print("Sorry, the opponent won.")
         else:
             print("The opponent disconnected, you win.")
@@ -308,7 +334,7 @@ class Server:
             print("\nThe client does not want a rematch.")
             return False
 
-        self.player.restart()
+        self.player = None
         return True
 
     def close(self) -> None:
